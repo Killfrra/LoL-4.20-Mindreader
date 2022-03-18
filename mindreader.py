@@ -1,12 +1,12 @@
 
 import sys
 import os
-import time
 import struct
 import json
 import signal
 import select
 import traceback
+import time
 
 sys.path.append('/usr/share/gameconqueror')
 from consts import LIBDIR
@@ -88,7 +88,7 @@ print('Reading...')
 try:
     while True:
 
-        time = read_value('f', gc_time_addr)[0]
+        #time = read_value('f', gc_time_addr)[0]
         obj_list_first_el_addr, obj_list_last_el_addr = read_value('II', om_addr)
 
         if obj_list_first_el_addr != 0 and obj_list_last_el_addr != 0:
@@ -100,11 +100,11 @@ try:
                 #     break
                 unit_addr = unit_addr[0]
                 
-                mask = read_value('I', unit_addr)
+                # mask = read_value('I', unit_addr)
                 # if mask == None:
                 #     print('mask at', unit_addr, 'is undefined')
                 #     break
-                is_minion = mask[0] == 17373484
+                is_minion = True #mask[0] == 17373484
                 
                 if is_minion:
                     
@@ -119,13 +119,13 @@ try:
                     #     print('pos at', unit_addr, 'is undefined')
                     #     break
 
-                    add_pos(id, time, pos)
+                    add_pos(id, time.time(), pos)
 
         if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
             int_handler()
             break
 
-        time.sleep(25 / 1000)
+        time.sleep(1 / 60)
 
 except Exception:
     traceback.print_exc()
