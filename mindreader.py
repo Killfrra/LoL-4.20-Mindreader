@@ -1,4 +1,3 @@
-
 import sys
 import os
 import struct
@@ -48,8 +47,15 @@ gc_addr = int('29791A8', 16) + wine32
 gc_time_addr = read_value('I', gc_addr)[0] + int('2c', 16)
 pos_offset = int('60', 16)
 id_offset = int('FC', 16)
+# if   0CFF31E8 <- champion
+# then 0CFFEF30 <- dir?
 
 records = {}
+
+def create(id, type):
+    if id not in records:
+        records[id] = {}
+    records[id]['type'] = type
 
 def add_pos(id, time, pos):
     if id not in records:
@@ -62,7 +68,7 @@ def add_pos(id, time, pos):
             positions = obj['positions']
             last_index = len(positions) - 1
             last_time, last_pos = positions[last_index]
-            if pos == last_pos or time == last_time:
+            if time == last_time or (pos == last_pos and last_index != 0):
                 positions[last_index] = (time, pos)
             else:
                 positions.append((time, pos))
@@ -85,6 +91,11 @@ signal.signal(signal.SIGINT, int_handler)
 
 print('Reading...')
 
+mask2type = {
+    17373484: 'lane_minion',
+    17376776: 'champion'
+}
+
 try:
     while True:
 
@@ -99,33 +110,35 @@ try:
                 #     print('unit_addr at', addr, 'is undefined')
                 #     break
                 unit_addr = unit_addr[0]
-                
-                # mask = read_value('I', unit_addr)
-                # if mask == None:
-                #     print('mask at', unit_addr, 'is undefined')
+                                    
+                id = read_value('I', unit_addr, id_offset)
+                # if id == None:
+                #     print('id at', unit_addr, 'is undefined')
                 #     break
-                is_minion = True #mask[0] == 17373484
-                
-                if is_minion:
-                    
-                    id = read_value('I', unit_addr, id_offset)
-                    # if id == None:
-                    #     print('id at', unit_addr, 'is undefined')
-                    #     break
-                    id = id[0]
+                id = id[0]
 
-                    pos = read_value('fff', unit_addr, pos_offset)
-                    # if pos == None:
-                    #     print('pos at', unit_addr, 'is undefined')
+                if id not in records:
+                    mask = read_value('I', unit_addr)
+                    # if mask == None:
+                    #     print('mask at', unit_addr, 'is undefined')
                     #     break
+                    mask = mask[0]
 
-                    add_pos(id, time.time(), pos)
+                    type = mask2type.get(mask, 'unknown')
+                    create(id, type)
+
+                pos = read_value('fff', unit_addr, pos_offset)
+                # if pos == None:
+                #     print('pos at', unit_addr, 'is undefined')
+                #     break
+
+                add_pos(id, time.time(), pos)
 
         if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
             int_handler()
             break
 
-        time.sleep(1 / 60)
+        time.sleep(1 / (60 * 4))
 
 except Exception:
     traceback.print_exc()
