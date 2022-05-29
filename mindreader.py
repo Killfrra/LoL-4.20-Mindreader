@@ -5,7 +5,7 @@ import json
 import signal
 import select
 import traceback
-import time
+import time as time_lib
 
 sys.path.append('/usr/share/gameconqueror')
 from consts import LIBDIR
@@ -68,9 +68,9 @@ def add_pos(id, time, pos):
             positions = obj['positions']
             last_index = len(positions) - 1
             last_time, last_pos = positions[last_index]
-            if time == last_time or (pos == last_pos and last_index != 0):
+            if time == last_time: #or (pos == last_pos and last_index != 0):
                 positions[last_index] = (time, pos)
-            else:
+            elif pos != last_pos:
                 positions.append((time, pos))
 
 exited = False # For some reason, exit() calls SIGINT
@@ -99,7 +99,7 @@ mask2type = {
 try:
     while True:
 
-        #time = read_value('f', gc_time_addr)[0]
+        time = read_value('f', gc_time_addr)[0] #time_lib.time()
         obj_list_first_el_addr, obj_list_last_el_addr = read_value('II', om_addr)
 
         if obj_list_first_el_addr != 0 and obj_list_last_el_addr != 0:
@@ -128,18 +128,24 @@ try:
                     create(id, type)
 
                 pos = read_value('fff', unit_addr, pos_offset)
+                pos = pos + read_value('fff', unit_addr, int('18e0', 16))
+                pos = pos + read_value('fff', unit_addr, int('1900', 16))
                 # if pos == None:
                 #     print('pos at', unit_addr, 'is undefined')
                 #     break
 
-                add_pos(id, time.time(), pos)
+                add_pos(id, time, pos)
 
         if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
             int_handler()
             break
 
-        time.sleep(1 / (60 * 4))
+        #time.sleep(1 / 60)
 
 except Exception:
     traceback.print_exc()
     int_handler()
+
+"""
+sub_617390
+"""
