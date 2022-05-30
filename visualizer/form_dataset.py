@@ -26,29 +26,6 @@ for id in data:
 global_time = 0
 objs = {}
 
-"""
-min_time = inf
-objs_with_min_time = []
-for id in data:
-    obj = {}
-    data_id = data[id]
-    positions = data_id['positions']
-    if id in objs:
-        obj = objs[id]
-        next_pos_idx = obj['last_pos_idx'] + 1
-        if len(positions > next_pos_idx):
-            next_time = positions[next_pos_idx][0]
-            if next_time < min_time:
-                min_time = next_time
-                objs_with_min_time = []
-                objs_with_min_time.append(obj)
-            elif next_time == min_time:
-                objs_with_min_time.append(obj)
-    else:
-        first_time = positions[0][0]
-        if first_time > global_time:
-"""
-
 def find_next_min():
     min_id = None
     min_time = inf
@@ -78,15 +55,21 @@ def get_objs_in_range(pos, range):
     for obj in objs.values():
         dist = vdistsq(obj['pos'], pos)
         if dist != 0 and dist < range ** 2:
-            ret.append(obj)
-    return ret
+            ret.append((dist, obj))
+    #ret.sort(reverse=True, key=lambda x: x[0])
+    return (x[1] for x in ret)
 
 radius = 35.744
 AvoidanceRadiusIncrease = 70
 speed = 325.0
 
-max_speed = 0
+max_vel_len = speed
+max_acc_len = 1
+max_dist = 1
 
+#"""
+max_dist = radius + AvoidanceRadiusIncrease
+"""
 for id in data:
     data_id = data[id]
     positions = data_id['positions']
@@ -103,19 +86,21 @@ for id in data:
         pos = position[1]
         if prev_pos != None:
             time_diff = time - prev_time
-            #vel = vdiv(vsub(pos, prev_pos), time_diff)
-            vel = vsub(pos, prev_pos)
+            vel = vdiv(vsub(pos, prev_pos), time_diff)
             speed = sqrt(vlensq(vel))
-            max_speed = max(speed, max_speed)
-            """
+            max_vel_len = max(speed, max_vel_len)
+            
             if prev_vel != None:
-                acc = vsub(vel, prev_vel)
-            """
+                acc = vdiv(vsub(vel, prev_vel), time_diff)
+                max_acc_len = max(sqrt(vlensq(acc)), max_acc_len)
+            
             prev_vel = vel
         prev_time = time
         prev_pos = pos
 
-print('MAX SPEED', max_speed)
+print('MAX VELOCITY', max_vel_len)
+print('MAX ACCELERA', max_acc_len)
+#"""
 
 #exit()
 
@@ -129,26 +114,29 @@ Ys = []
 def record(obj):
     pos = obj['last_pos']
     vel = obj['last_vel']
-    dvel = obj['last_dvel']
-
     next_vel = obj['vel']
+    dvel = obj['last_dvel']
+    
+    time_diff = obj['time'] - obj['last_time']
+    acc = vdiv(vsub(next_vel, vel), time_diff)
 
-    neighbours = get_objs_in_range(pos, radius + AvoidanceRadiusIncrease)
+    neighbours = get_objs_in_range(pos, max_dist)
     #if len(neighbours) > 0:
     if True:
         X = []
-        appendXZ(X, vel)
+        X.append(time_diff)
+        appendXZ(X, vdiv(vel, max_vel_len))
         appendXZ(X, dvel)
         for neighbor in neighbours:
-            npos = neighbor['pos']
-            nvel = neighbor['vel']
-            rpos = vdiv(vsub(npos, pos), radius + AvoidanceRadiusIncrease)
+            npos = vdiv(vsub(neighbor['pos'], pos), max_dist)
+            nvel = vdiv(neighbor['vel'], max_vel_len)
             
-            appendXZ(X, rpos)
+            appendXZ(X, npos)
             appendXZ(X, nvel)
         
         Y = []
-        appendXZ(Y, next_vel)
+        #appendXZ(Y, vdiv(acc, max_acc_len))
+        appendXZ(Y, vdiv(next_vel, max_vel_len))
 
         Xs.append(X)
         Ys.append(Y)
@@ -179,7 +167,7 @@ while True:
     if id in objs:
         obj = objs[id]
 
-        obj['last_pos'] = obj['pos']
+        prev_pos = obj['last_pos'] = obj['pos']
         obj['last_time'] = obj['time']
         obj['last_vel'] = obj['vel']
         obj['last_dvel'] = obj['dvel']
@@ -187,11 +175,11 @@ while True:
         obj['time'] = time
         
         #time_diff = 1 / 60 
-        #time_diff = obj['time'] - obj['last_time']
-        time_diff = 1
+        time_diff = obj['time'] - obj['last_time']
+        #time_diff = 1
 
         if set_dvel(obj):
-            obj['vel'] = vdiv(vsub(obj['pos'], obj['last_pos']), time_diff * max_speed)
+            obj['vel'] = vdiv(vsub(pos, prev_pos), time_diff)
             record(obj)
         else:
             print(id, 'reached gloal')
@@ -220,7 +208,7 @@ norm_mat(Xs, maxXY)
 norm_mat(Ys, maxXY)
 """
 
-maxXlen = 72
+maxXlen = 73
 """
 for X in Xs:
     maxXlen = max(maxXlen, len(X))
@@ -233,7 +221,7 @@ with open('output.data', 'wb') as f:
     pickle.dump((Xs, Ys), f)
 
 with open('conditions.data', 'wb') as f:
-    pickle.dump((starts, goals, max_speed), f)
+    pickle.dump((starts, goals, max_vel_len), f)
 
 with open('output.txt', 'w') as f:
     print(Xs, file=f)

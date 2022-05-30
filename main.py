@@ -34,7 +34,7 @@ def len2(v):
     return sqrt((v[0] * v[0]) + (v[1] * v[1]))
 
 records = {}
-fname = 'records.json'
+fname = 'visualizer/records_0_same_as_0.json'
 with open(fname, 'r') as input:
     print('loading...')
     records = json.load(input)
@@ -58,9 +58,10 @@ for i, (time, pos) in enumerate(positions):
         if prev_vel != None:
             acc = div(diff(vel, prev_vel), time_diff)
             dx.append(time)
-            dy.append(pos)
-            #dx.append(time)
-            #dy.append(acc)
+            #dy.append(pos)
+            #dy.append(vel)
+            #dy.append(time_diff)
+            dy.append(acc)
         prev_vel = vel
     prev_time = time
     prev_pos = pos

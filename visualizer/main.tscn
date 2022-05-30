@@ -10,8 +10,8 @@ mouse_filter = 2
 
 [node name="Node2D" type="Node2D" parent="."]
 script = ExtResource( 1 )
-record_file = "res://records_0_same_as_0.json"
-speed = 1.0
+record_file = "res://predicted.json"
+speed = 0.1
 
 [node name="Tween" type="Tween" parent="Node2D"]
 

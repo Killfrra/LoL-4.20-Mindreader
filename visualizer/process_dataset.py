@@ -12,7 +12,7 @@ X_train, X_test, y_train, y_test = train_test_split(Xs, Ys, test_size = 0.25, ra
 
 print(len(X_train), len(X_test))
 
-regr = MLPRegressor(random_state=1, hidden_layer_sizes=(1024, 1024, 1024,)).fit(X_train, y_train)
+regr = MLPRegressor(random_state=1).fit(X_train, y_train)
 print(regr.score(X_test, y_test))
 
 with open('regressor.data', 'wb') as f:

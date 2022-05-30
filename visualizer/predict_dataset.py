@@ -46,7 +46,7 @@ def appendXZ(l, v):
 
 global_time = 0
 time_delta = 1 / 60
-for frame in range(900):
+for frame in range(300):
 
     global_time += time_delta
     
@@ -81,15 +81,15 @@ for frame in range(900):
                     appendXZ(X, rpos)
                     appendXZ(X, nvel)
 
-                while len(X) < 72:
+                while len(X) < 73:
                     X.append(0)
 
                 pvel = regr.predict([X])[0]
                 vel = (pvel[0], 0, pvel[1])
             #"""
 
-        #pos = vadd(pos, vmul(vel, max_speed * time_delta))
-        pos = vadd(pos, vmul(vel, max_speed))
+        pos = vadd(pos, vmul(vel, max_speed * time_delta))
+        #pos = vadd(pos, vmul(vel, max_speed))
 
         obj['pos'] = pos
         obj['vel'] = vel
